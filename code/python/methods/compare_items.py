@@ -57,7 +57,7 @@ class CompareItemsHandler():
             ]
             await asyncio.gather(*matching_tasks)
 
-            if (self.found_items[self.item1_name] and self.found_items[self.item2_name]):
+            if (self.found_items.get(self.item1_name) and self.found_items.get(self.item2_name)):
                 await self.compare_items(self.found_items[self.item1_name]['item'], 
                                    self.found_items[self.item2_name]['item'],
                                    self.details_requested)
@@ -67,7 +67,7 @@ class CompareItemsHandler():
                 return
         
         except Exception as e:
-            logger.error(f"Error in ItemDetailsHandler.do(): {e}")
+            logger.error(f"Error in CompareItemsHandler.do(): {e}")
             await self._send_no_items_found_message()
             return
     
@@ -181,9 +181,16 @@ class CompareItemsHandler():
         """Send message when items cannot be found for comparison."""
         message = {
             "message_type": "compare_items",
-            "comparison": f"Could not find one or both items: '{self.item1_name}' and '{self.item2_name}' on {self.handler.site}.",
-            "item1": {"name": self.item1_name, "url": "", "schema_object": {}},
-            "item2": {"name": self.item2_name, "url": "", "schema_object": {}}
+            "details": f"Could not find one or both items ('{self.item1_name}', '{self.item2_name}') on {self.handler.site}.",
+            "item1": {
+                "name": self.item1_name,
+                "found": bool(self.found_items.get(self.item1_name)),
+            },
+            "item2": {
+                "name": self.item2_name,
+                "found": bool(self.found_items.get(self.item2_name)),
+            },
+            "site": self.handler.site
         }
         await self.handler.send_message(message)
 
